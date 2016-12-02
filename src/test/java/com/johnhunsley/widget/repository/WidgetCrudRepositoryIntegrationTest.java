@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.util.List;
+import java.util.Collection;
 
 import static org.junit.Assert.assertFalse;
 
@@ -40,7 +40,7 @@ public class WidgetCrudRepositoryIntegrationTest {
 
     @Test
     public void testFindByGroup() {
-        List<Widget> widgets = widgetCrudRepository.findByGroup(group);
+        Collection<Widget> widgets = widgetCrudRepository.findByGroup(group);
         assertFalse(widgets.isEmpty());
 
     }
