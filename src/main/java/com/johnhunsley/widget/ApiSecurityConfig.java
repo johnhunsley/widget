@@ -1,5 +1,6 @@
 package com.johnhunsley.widget;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
@@ -13,11 +14,12 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
  *         Date : 17/11/2016
  *         Time : 14:32
  */
+@Configuration
 public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().anyRequest().authenticated();
+        http.authorizeRequests().antMatchers("/widgets").authenticated();
         http.csrf().disable();
     }
 }

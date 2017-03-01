@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author John Hunsley
@@ -28,7 +29,7 @@ public class WidgetController {
     @RequestMapping(method = RequestMethod.PUT, consumes = "application/json", value = "/{group}/{id}")
     public void updateWidget(@PathVariable final Long group,
                              @PathVariable final String id,
-                             @RequestBody final String properties) {
+                             @RequestBody final Map<String,String> properties) {
         Widget widget = new Widget(properties, new WidgetId(group, id));
         widgetCrudRepository.save(widget);
     }

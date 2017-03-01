@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonRawValue;
 import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * @author John Hunsley
@@ -21,11 +22,11 @@ public class Widget implements Serializable {
 
     @JsonRawValue
     @DynamoDBAttribute(attributeName = "properties")
-    private String properties;
+    private Map<String, String> properties;
 
     public Widget() {}
 
-    public Widget(String properties, WidgetId widgetId) {
+    public Widget(Map<String, String> properties, WidgetId widgetId) {
         this.properties = properties;
         this.widgetId = widgetId;
     }
@@ -50,11 +51,11 @@ public class Widget implements Serializable {
         widgetId.setId(id);
     }
 
-    public String getProperties() {
+    public Map<String, String> getProperties() {
         return properties;
     }
 
-    public void setProperties(String properties) {
+    public void setProperties(Map<String, String> properties) {
         this.properties = properties;
     }
 
