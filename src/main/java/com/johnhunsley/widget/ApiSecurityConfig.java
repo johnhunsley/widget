@@ -19,7 +19,10 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/widgets").authenticated();
-        http.csrf().disable();
+        http
+                .authorizeRequests()
+                .antMatchers("/widgets/*").authenticated()
+                .antMatchers("/**").permitAll();
+
     }
 }
