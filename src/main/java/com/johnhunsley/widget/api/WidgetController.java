@@ -33,4 +33,5 @@ public class WidgetController {
         Widget widget = new Widget(properties, new WidgetId(group, id));
         widgetCrudRepository.save(widget);
     }
+
 }

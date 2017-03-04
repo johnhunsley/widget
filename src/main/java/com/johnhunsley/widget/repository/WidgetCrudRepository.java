@@ -5,6 +5,7 @@ import com.johnhunsley.widget.domain.WidgetId;
 import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.Collection;
 
@@ -14,6 +15,7 @@ import java.util.Collection;
 @EnableScan
 public interface WidgetCrudRepository extends CrudRepository<Widget, WidgetId> {
 
+    @PreAuthorize("hasPermission('functionalAccess', 'SERVICE_PROVIDER')")
     Collection<Widget> findByGroup(@Param("group") Long group);
 
 }

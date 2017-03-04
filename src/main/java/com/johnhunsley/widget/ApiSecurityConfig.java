@@ -16,12 +16,14 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
  */
 @Configuration
 public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
+    final String SERVICE_PROVIDER = "https://api.stormpath.com/v1/groups/uCPsT96vEtrEh6R64kWZO";
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
                 .antMatchers("/widgets/*").authenticated()
+                .antMatchers("/user/").authenticated()
                 .antMatchers("/**").permitAll();
 
     }
