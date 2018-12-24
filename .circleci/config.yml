@@ -27,7 +27,7 @@ jobs:
           path: target/surefire-reports
 
       - store_artifacts:
-          path: target/widget.jar
+          path: target/widget-1.2-SNAPSHOT.jar
 
       - run:
           name: Setup common environment variables
