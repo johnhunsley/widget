@@ -55,58 +55,60 @@ jobs:
             - docker-image
   deploy:
     docker:
-      - image: circleci/python:3.6.1
+      - image: docker:17.05.0-ce-git
     environment:
       AWS_DEFAULT_OUTPUT: json
     steps:
       - checkout
       - setup_remote_docker
-      - attach_workspace:
-          at: workspace
-      - restore_cache:
-          key: v1-{{ checksum "requirements.txt" }}
       - run:
-          name: Install awscli
+          name: Install dependencies
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-      - save_cache:
-          key: v1-{{ checksum "requirements.txt" }}
-          paths:
-            - "venv"
+            apk add --no-cache py-pip=9.0.0-r1
+            pip install awscli==1.11.76
       - run:
-          name: Load image
+          name: Push application Docker image
           command: |
-            docker load --input workspace/docker-image/image.tar
-      - run:
-          name: Setup common environment variables
-          command: |
-            echo 'export ECR_REPOSITORY_NAME="${AWS_RESOURCE_NAME_PREFIX}"' >> $BASH_ENV
-            echo 'export ECS_CLUSTER_NAME="${AWS_RESOURCE_NAME_PREFIX}-cluster"' >> $BASH_ENV
-            echo 'export ECS_SERVICE_NAME="${AWS_RESOURCE_NAME_PREFIX}-service"' >> $BASH_ENV
-      - run:
-          name: Push image
-          command: |
-            . venv/bin/activate
-            eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$CIRCLE_SHA1
-      - run:
-          name: Deploy
-          command: |
-            . venv/bin/activate
-            export ECS_TASK_FAMILY_NAME="${AWS_RESOURCE_NAME_PREFIX}-service"
-            export ECS_CONTAINER_DEFINITION_NAME="${AWS_RESOURCE_NAME_PREFIX}-service"
-            export EXECUTION_ROLE_ARN="arn:aws:iam::$AWS_ACCOUNT_ID:role/${AWS_RESOURCE_NAME_PREFIX}-ecs-execution-role"
-            ./deploy.sh
-      - run:
-          name: Test deployment (Please manually tear down AWS resources after use, if desired)
-          command: |
-            . venv/bin/activate
-            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME | jq -r '.services[0].loadBalancers[0].targetGroupArn')
-            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
-            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
-            curl http://$ELB_DNS_NAME | grep "Hello World!"
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              CLUSTER='test-app'
+              FAMILY='test-app'
+              DOCKER_IMAGE='test-app'
+              TASK='test-app'
+              SERVICE='app-service'
+              # Login to AWS
+              aws configure set region $AWS_REGION
+              $(aws ecr get-login)
+              # Tag and push docker image
+              docker tag app $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$DOCKER_IMAGE:$CIRCLE_SHA1
+              docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$DOCKER_IMAGE:$CIRCLE_SHA1
+              # Create task for docker deploy
+              task_template='[
+                {
+                  "name": "%s",
+                  "image": "%s.dkr.ecr.%s.amazonaws.com/%s:%s",
+                  "essential": true,
+                  "memoryReservation": 1000,
+                  "portMappings": [
+                    {
+                      "containerPort": 3000,
+                      "hostPort": 80
+                    }
+                  ],
+                  "environment" : [
+                      { "name" : "NODE_ENV", "value" : "production" }
+                  ]
+                }
+              ]'
+              echo "$task_template"
+              task_def=$(printf "$task_template" $TASK $AWS_ACCOUNT_ID $AWS_REGION $TASK $CIRCLE_SHA1)
+              # Register task definition
+              json=$(aws ecs register-task-definition --container-definitions "$task_def" --family "$FAMILY")
+              # Grab revision # using regular bash and grep
+              revision=$(echo "$json" | grep -o '"revision": [0-9]*' | grep -Eo '[0-9]+')
+              # Deploy revision
+              aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" --task-definition "$TASK":"$revision"
+              return 0
+            fi
 workflows:
   version: 2
   build-deploy:
