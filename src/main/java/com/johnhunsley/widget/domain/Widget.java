@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * @author John Hunsley
  */
-@DynamoDBTable(tableName = "widget")
+@Enity
 public class Widget implements Serializable {
     private static final long serialVersionUID = 100L;
 
