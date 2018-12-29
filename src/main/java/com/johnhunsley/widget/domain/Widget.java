@@ -1,53 +1,46 @@
 package com.johnhunsley.widget.domain;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonRawValue;
-import org.springframework.data.annotation.Id;
 
+import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author John Hunsley
  */
-@Enity
+@Entity
+@Table(name = "WIDGETS")
 public class Widget implements Serializable {
     private static final long serialVersionUID = 100L;
 
     @Id
-    @DynamoDBIgnore
-    @JsonIgnore
-    private WidgetId widgetId;
+    @Column(name = "ID")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
 
-    @JsonRawValue
-    @DynamoDBAttribute(attributeName = "properties")
+    @Column(name = "GROUP_NAME")
+    private String group;
+
+    @Column(name = "PROPERTIES")
     private String properties;
 
     public Widget() {}
 
-    public Widget(String properties, WidgetId widgetId) {
+    public Widget(String properties, String group) {
         this.properties = properties;
-        this.widgetId = widgetId;
+        this.group = group;
     }
 
-    @DynamoDBHashKey(attributeName = "group")
-    public Long getGroup() {
-        return widgetId != null ? widgetId.getGroup() : null;
+    public Long getId() {
+        return id;
     }
 
-    public void setGroup(final Long group) {
-        if(widgetId == null) widgetId = new WidgetId();
-        widgetId.setGroup(group);
+    public String getGroup() {
+        return group;
     }
 
-    @DynamoDBRangeKey(attributeName = "id")
-    public String getId() {
-        return widgetId != null ? widgetId.getId() : null;
-    }
-
-    public void setId(final String id) {
-        if(widgetId == null) widgetId = new WidgetId();
-        widgetId.setId(id);
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     public String getProperties() {
@@ -63,11 +56,12 @@ public class Widget implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Widget widget = (Widget) o;
-        return !(widgetId != null ? !widgetId.equals(widget.widgetId) : widget.widgetId != null);
+        return id.equals(widget.id) &&
+                group.equals(widget.group);
     }
 
     @Override
     public int hashCode() {
-        return widgetId != null ? widgetId.hashCode() : 0;
+        return Objects.hash(id, group);
     }
 }
